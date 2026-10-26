@@ -1,0 +1,88 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    display: flex;
+  }
+
+  .sidebar {
+    width: 240px;
+    background-color: #0074D9;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    position: fixed;
+    left: 0;
+    top: 0;
+  }
+
+  .sidebar h2 {
+    margin-bottom: 30px;
+    font-size: 24px;
+  }
+
+  .sidebar a {
+    display: block;
+    padding: 10px 15px;
+    color: white;
+    text-decoration: none;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    transition: 0.3s;
+  }
+
+  .sidebar a:hover {
+    background-color: #005fa3;
+  }
+
+  .main-content {
+    margin-left: 260px;
+    padding: 20px;
+    flex-grow: 1;
+  }
+
+  h1 {
+    margin-top: 0;
+    font-size: 28px;
+    color: #333;
+  }
+
+  select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+
+  .row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    flex: 1 1 45%;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+
+  th {
+    background: #0074D9;
+    color: white;
+  }
+
+  canvas {
+    max-width: 100%;
+  }
