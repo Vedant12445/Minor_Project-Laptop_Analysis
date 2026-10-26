@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Price Insights</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="static/css/pricingStyle.css">
+  
+</head>
+<body>
+  <div class="main-content">
+    <h1>Price Insights</h1>
+
+    <label>
+      Category:
+      <select id="categorySelect">
+        {% for c in categories %}
+        <option value="{{ c }}">{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Chart Type:
+      <select id="chartTypeSelect">
+        <option value="bar">Bar</option>
+        <option value="line">Line</option>
+      </select>
+    </label>
+
+    <div class="chart-container">
+      <canvas id="chartAvgPrice"></canvas>
+    </div>
+  </div>
+<script>
+  const catEl = document.getElementById('categorySelect');
+  const typeEl = document.getElementById('chartTypeSelect');
+  const chartEl = document.getElementById('chartAvgPrice');
+  let chart;
+  
+  async function draw() {
+    const cat = catEl.value;
+    const type = typeEl.value;
+    const avg = await fetch(`/api/avg-price/${cat}`).then(res => res.json());
+  
+    if (chart) chart.destroy();
+  
+    const data = {
+      labels: avg.brands,
+      datasets: [{
+        label: 'Average Price',
+        data: avg.prices,
+        backgroundColor: '#3498DB',
+        borderColor: '#2980b9',
+        borderWidth: 1
+      }]
+    };
+  
+    chart = new Chart(chartEl, {
+      type: type,
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+  
+  catEl.addEventListener('change', draw);
+  typeEl.addEventListener('change', draw);
+  window.onload = draw;
+  </script>  
+</body>
+</html>

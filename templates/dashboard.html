@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Flipkart DAV Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+
+<body>
+
+  <body>
+    <div class="sidebar">
+      <h2>Dashboards</h2>
+      <a href="/pricing">Price Insights</a>
+      <a href="/ratings">Rating Analysis</a>
+      <a href="/discounts">Discount Insights</a>
+      <a href="/ml">ML Insights</a>
+    </div>
+
+    <div class="main-content">
+      <h1>Flipkart DAV Dashboard</h1>
+
+      <label>
+        Category:
+        <select id="categorySelect">
+          {% for c in categories %}
+          <option value="{{ c }}">{{ c|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+
+      <!-- Top‑5 Rated Products Table -->
+      <div class="card">
+        <h2>Top 5 Rated Products</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="tblTop5"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Top 5 Products with Highest Discounts</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Discount (%)</th>
+            </tr>
+          </thead>
+          <tbody id="tblTopDiscounts"></tbody>
+        </table>
+      </div>
+
+      </table>
+    </div>
+
+    <script>
+      const selectEl = document.getElementById('categorySelect');
+      const tblEl = document.getElementById('tblTop5');
+      let charts = {};
+
+      async function getJSON(url) {
+        const res = await fetch(url);
+        return res.json();
+      }
+
+      async function refreshDashboard() {
+        const cat = selectEl.value;
+
+
+        const top5 = await getJSON(`/api/top5/${cat}`);
+        tblEl.innerHTML = top5.title.map((title, i) =>
+          `<tr><td>${title}</td><td>${top5.rating[i]}</td></tr>`
+        ).join('');
+
+
+        const topDiscounts = await getJSON(`/api/top-discounts/${cat}`);
+        const tblDisc = document.getElementById('tblTopDiscounts');
+        tblDisc.innerHTML = '';
+        topDiscounts.title.forEach((title, i) => {
+          const discount = topDiscounts.discount[i];
+          tblDisc.insertAdjacentHTML('beforeend', `<tr><td>${title}</td><td>${discount}%</td></tr>`);
+        });
+
+        async function refreshDashboard() {
+          const cat = selectEl.value;
+        }
+
+        selectEl.addEventListener('change', refreshDashboard);
+        window.onload = refreshDashboard;
+      }
+
+      selectEl.addEventListener('change', refreshDashboard);
+      window.onload = refreshDashboard;
+    </script>
+  </body>
+
+</html>

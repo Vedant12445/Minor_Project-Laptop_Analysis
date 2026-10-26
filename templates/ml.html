@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>ML Insights</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="static/css/mlStyle.css">
+</head>
+
+<body>
+  <div class="main-content">
+    <h1>ML Insights</h1>
+    <label>Category:
+      <select id="categorySelect">
+        {% for c in categories %}
+        <option value="{{ c }}">{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <!-- Cluster Visualization -->
+    <div class="card">
+      <h2>Price vs Rating Clusters</h2>
+      <div class="chart-container">
+        <canvas id="chartCluster"></canvas>
+      </div>
+    </div>
+
+    <!-- Elbow Method -->
+    <div class="card">
+      <h2>Elbow Method (k vs Inertia)</h2>
+      <div class="chart-container">
+        <canvas id="chartElbow"></canvas>
+      </div>
+    </div>
+
+    <label>Model:
+      <select id="modelSelect">
+        <option value="rating">Rating Prediction</option>
+        <option value="price">Price Prediction</option>
+      </select>
+    </label>
+
+    <div class="card">
+      <h2>Regression Results</h2>
+      <p><strong>R² Score:</strong> <span id="r2"></span></p>
+      <p><strong>MSE:</strong> <span id="mse"></span></p>
+      <p><strong>Coefficients:</strong> <span id="coefficients"></span></p>
+      <p><strong>Intercept:</strong> <span id="intercept"></span></p>
+    </div>
+  </div>
+
+  <script>
+    const catEl = document.getElementById('categorySelect');
+    const clusterEl = document.getElementById('chartCluster');
+    const elbowEl = document.getElementById('chartElbow');
+    let charts = { cluster: null, elbow: null };
+
+
+    async function getRegressionData(category, modelType) {
+      const endpoint = modelType === 'rating' ? `/api/lr-rating/${category}` : `/api/lr-price/${category}`;
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error('Failed to fetch regression data');
+      return res.json();
+    }
+
+    async function updateRegressionResults() {
+      const category = categorySelect.value;
+      const modelType = modelSelect.value;
+
+      const data = await getRegressionData(category, modelType);
+
+      document.getElementById('r2').textContent = data.r2.toFixed(3);
+      document.getElementById('mse').textContent = data.mse.toFixed(3);
+      document.getElementById('coefficients').textContent = data.coefficients.map(v => v.toFixed(4)).join(', ');
+      document.getElementById('intercept').textContent = data.intercept.toFixed(3);
+    }
+
+    categorySelect.addEventListener('change', updateRegressionResults);
+    modelSelect.addEventListener('change', updateRegressionResults);
+
+
+    async function drawAll() {
+      const cat = catEl.value;
+
+      // --- Cluster Plot ---
+      const clusterData = await fetch(`/api/cluster/${cat}`).then(r => r.json());
+      const ds = Object.entries(clusterData).map(([cluster, obj], idx) => ({
+        label: 'Cluster ' + cluster,
+        data: obj.x.map((x, i) => ({ x, y: obj.y[i] })),
+        backgroundColor: ['#F4A261', '#2A9D8F', '#E76F51', 'purple', 'teal'][idx % 5]
+      }));
+      if (charts.cluster) charts.cluster.destroy();
+      charts.cluster = new Chart(clusterEl, {
+        type: 'scatter',
+        data: { datasets: ds },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            x: { title: { display: true, text: 'Price' } },
+            y: { title: { display: true, text: 'Rating' } }
+          }
+        }
+      });
+
+      // --- Elbow Plot ---
+      const elbowData = await fetch(`/api/elbow/${cat}`).then(r => r.json());
+      if (charts.elbow) charts.elbow.destroy();
+      charts.elbow = new Chart(elbowEl, {
+        type: 'line',
+        data: {
+          labels: elbowData.k_values,
+          datasets: [{
+            label: 'Inertia',
+            data: elbowData.inertias,
+            fill: false,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              title: { display: true, text: 'Number of Clusters (k)' },
+              ticks: { precision: 0 }
+            },
+            y: { title: { display: true, text: 'Inertia' } }
+          }
+        }
+      });
+    }
+
+    catEl.addEventListener('change', drawAll);
+    window.onload = () => {
+      const categorySelect = document.getElementById('categorySelect');
+      const modelSelect = document.getElementById('modelSelect');
+
+      categorySelect.addEventListener('change', () => {
+        drawAll();
+        updateRegressionResults();
+      });
+
+      modelSelect.addEventListener('change', updateRegressionResults);
+
+      drawAll();
+      updateRegressionResults();
+    };
+  </script>
+</body>
+
+</html>

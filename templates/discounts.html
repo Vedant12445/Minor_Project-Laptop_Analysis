@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Discount Insights</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="static/css/discountStyle.css">
+</head>
+<body>
+  <div class="main-content">
+    <h1>Discount Insights</h1>
+
+    <label>
+      Category:
+      <select id="categorySelect">
+        {% for c in categories %}
+        <option value="{{ c }}">{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Chart Type:
+      <select id="chartTypeSelect">
+        <option value="bar">Bar</option>
+        <option value="line">Line</option>
+      </select>
+    </label>
+
+    <div class="chart-container">
+      <canvas id="chartDiscount"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const catEl = document.getElementById('categorySelect');
+    const typeEl = document.getElementById('chartTypeSelect');
+    const chartEl = document.getElementById('chartDiscount');
+    let chart;
+
+    async function draw() {
+      const cat = catEl.value;
+      const type = typeEl.value;
+      const discount = await fetch(`/api/avg-discount/${cat}`).then(r => r.json());
+
+      if (chart) chart.destroy();
+
+      const data = {
+        labels: discount.brands,
+        datasets: [{
+          label: 'Average Discount (%)',
+          data: discount.discounts,
+          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1,
+          fill: type === 'line' ? false : true
+        }]
+      };
+
+      chart = new Chart(chartEl, {
+        type: type,
+        data: data,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#333',
+                font: {
+                  size: 14
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    catEl.addEventListener('change', draw);
+    typeEl.addEventListener('change', draw);
+    window.onload = draw;
+  </script>
+</body>
+</html>
